@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RuleType {
+  PREFIX
+  SUFFIX
+  REPLACE
+  REGEX
+  WORD_ORDER
+}
+
+enum ThesaurusRelation {
+  SYNONYM
+  ANTONYM
+  RELATED
+}
+
+model Language {
+  id             String   @id @default(cuid())
+  name           String
+  code           String   @unique
+  description    String?
+  sourceLanguage String   @default("en")
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  dictionaryEntries DictionaryEntry[]
+  vocabularies      Vocabulary[]
+  grammaticalRules  GrammaticalRule[]
+  thesaurusEntries  ThesaurusEntry[]
+
+  @@index([isActive])
+  @@index([sourceLanguage])
+}
+
+model DictionaryEntry {
+  id           String   @id @default(cuid())
+  languageId   String
+  sourceWord   String
+  targetWord   String
+  partOfSpeech String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  language Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@unique([languageId, sourceWord])
+  @@index([languageId])
+  @@index([sourceWord])
+}
+
+model Vocabulary {
+  id           String   @id @default(cuid())
+  languageId   String
+  word         String
+  definition   String
+  partOfSpeech String?
+  example      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  language Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@unique([languageId, word])
+  @@index([languageId])
+}
+
+model GrammaticalRule {
+  id          String   @id @default(cuid())
+  languageId  String
+  name        String
+  description String?
+  ruleType    RuleType
+  pattern     String
+  replacement String   @default("")
+  priority    Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  language Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@index([languageId, isActive, priority])
+}
+
+model ThesaurusEntry {
+  id         String            @id @default(cuid())
+  languageId String
+  word       String
+  related    String
+  relation   ThesaurusRelation @default(SYNONYM)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  language Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@index([languageId, word])
+}
