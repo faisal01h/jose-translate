@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# José Translate
 
-## Getting Started
+A Next.js web app for translating real languages into fictional constructed languages. Public users can translate without an account; admins manage linguistic data through a password-protected panel.
 
-First, run the development server:
+## Features
+
+- Public translator (English → fictional language by default)
+- Dictionaries, vocabulary, grammatical rules, and thesaurus support
+- Admin dashboard for managing all language data
+- PostgreSQL 17+ with Prisma ORM
+- Docker Compose for local and production-style runs
+
+## Quick start with Docker
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
+docker compose up --build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 for the translator and http://localhost:3000/admin for the admin panel.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Default admin password: `changeme` (set `ADMIN_PASSWORD` in `.env`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+After the database is up, seed sample data:
 
-## Learn More
+```bash
+docker compose exec app npm run db:seed
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Local development
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Start PostgreSQL:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+docker compose up db -d
+```
 
-## Deploy on Vercel
+2. Configure environment:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+cp .env.example .env
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. Install and migrate:
+
+```bash
+npm install
+npm run db:migrate
+npm run db:seed
+npm run dev
+```
+
+## Admin access
+
+- URL: `/admin`
+- Auth: single shared password via `ADMIN_PASSWORD`
+- No user registration for translators
+
+## Translation engine
+
+1. Tokenizes input and looks up words in the dictionary
+2. Falls back to thesaurus synonyms when direct matches are missing
+3. Applies grammatical rules (prefix, suffix, replace, regex, word order) by priority
+
+## Environment variables
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `ADMIN_PASSWORD` | Admin panel password |
+| `SESSION_SECRET` | HMAC secret for admin session cookies |
